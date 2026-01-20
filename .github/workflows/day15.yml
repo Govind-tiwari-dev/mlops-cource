@@ -1,0 +1,17 @@
+name: Day 15 Hello World
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  say-hello:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print a greeting
+        run: echo "Hello! This runs automatically on the cloud."
+      - name: Check system info
+        run: |
+          echo "I am running on:"
+          uname -a
