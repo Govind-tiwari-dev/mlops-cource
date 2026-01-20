@@ -1,30 +1,49 @@
-name: Build and Push Docker Image
+name: Build and Deploy
 
 on:
   push:
     branches:
-      - main  # Run this only when code is pushed to 'main'
+      - main
 
 jobs:
+  # JOB 1: BUILD (Same as before)
   build-and-push:
     runs-on: ubuntu-latest
-
     steps:
-      # 1. Download your code to the runner
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # 2. Log in to Docker Hub (Using the secrets you just set)
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 3. Build the image and Push it
       - name: Build and Push
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/mlops-app:latest
+
+  # JOB 2: DEPLOY (The New Part)
+  deploy:
+    needs: build-and-push  # Wait for build to finish first!
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            # 1. Stop the old container
+            docker stop mlops-app || true
+            docker rm mlops-app || true
+
+            # 2. Pull the latest image
+            docker pull ${{ secrets.DOCKER_USERNAME }}/mlops-app:latest
+
+            # 3. Start the new container
+            docker run -d --name mlops-app -p 80:3000 ${{ secrets.DOCKER_USERNAME }}/mlops-app:latest
