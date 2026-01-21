@@ -28,7 +28,7 @@ jobs:
 
   # JOB 2: DEPLOY (The New Part)
   deploy:
-    needs: build-and-push  # Wait for build to finish first!
+    needs: build-and-push # Wait for build to finish first!
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to EC2
@@ -47,3 +47,21 @@ jobs:
 
             # 3. Start the new container
             docker run -d --name mlops-app -p 80:3000 ${{ secrets.DOCKER_USERNAME }}/mlops-app:latest
+
+      # [Existing steps...]
+
+      - name: Notify Discord - Success
+        if: success() # Only run if deployment worked
+        run: |
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{"content": "✅ **DEPLOYMENT SUCCESS!**\nDay 20 Update is live on AWS.\nCheck it out: http://${{ secrets.SSH_HOST }}"}' \
+          ${{ secrets.DISCORD_WEBHOOK }}
+
+      - name: Notify Discord - Failure
+        if: failure() # Only run if something broke
+        run: |
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{"content": "❌ **DEPLOYMENT FAILED!**\nCheck GitHub Actions logs immediately."}' \
+          ${{ secrets.DISCORD_WEBHOOK }}
