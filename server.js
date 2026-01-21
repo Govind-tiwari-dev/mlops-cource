@@ -3,7 +3,8 @@ const app = express();
 const port = 3000;
 
 app.get("/", (req, res) => {
-  res.send("Hello from Day 18! I was deployed automatically by a robot.");
+  // Simulate a broken update
+res.send('ERROR 500: DATABASE CRASHED! The site is down!');
 });
 
 app.listen(port, () => {
